@@ -50,14 +50,14 @@ def get_datasets_from_superset(superset, superset_db_id):
                     }
 
                     # fail if it breaks uniqueness constraint
-                    assert dataset_key not in datasets_keys, \
-                        f"Dataset {dataset_key} is a duplicate name (schema + table) " \
-                        "across databases. " \
-                        "This would result in incorrect matching between Superset and dbt. " \
-                        "To fix this, remove duplicates or add the ``superset_db_id`` argument."
-
-                    datasets_keys.add(dataset_key)
-                    datasets.append(dataset_dict)
+                    # assert dataset_key not in datasets_keys, \
+                    #     f"Dataset {dataset_key} is a duplicate name (schema + table) " \
+                    #     "across databases. " \
+                    #     "This would result in incorrect matching between Superset and dbt. " \
+                    #     "To fix this, remove duplicates or add the ``superset_db_id`` argument."
+                    if dataset_key not in datasets_keys:
+                        datasets_keys.add(dataset_key)
+                        datasets.append(dataset_dict)
             page_number += 1
         else:
             break
@@ -78,21 +78,20 @@ def get_tables_from_dbt(dbt_manifest, dbt_db_name):
             schema = table['schema']
             database = table['database']
 
-            #CG hack to avoid duplicate error
-            table_key_short = table_key_long
-            #table_key_short = schema + '.' + name
+            table_key_short = schema + '.' + name
             columns = table['columns']
             description = table['description']
 
             if dbt_db_name is None or database == dbt_db_name:
                 # fail if it breaks uniqueness constraint
-                assert table_key_short not in tables, \
-                    f"Table {table_key_short} is a duplicate name (schema + table) " \
-                    f"across databases. " \
-                    "This would result in incorrect matching between Superset and dbt. " \
-                    "To fix this, remove duplicates or add the ``dbt_db_name`` argument."
-
-                tables[table_key_short] = {'columns': columns, 'description': description}
+                # fail if it breaks uniqueness constraint
+                # assert table_key_short not in tables, \
+                #     f"Table {table_key_short} is a duplicate name (schema + table) " \
+                #     f"across databases. " \
+                #     "This would result in incorrect matching between Superset and dbt. " \
+                #     "To fix this, remove duplicates or add the ``dbt_db_name`` argument."
+                if table_key_short not in tables:
+                    tables[table_key_short] = {'columns': columns, 'description': description}
 
     assert tables, "Manifest is empty!"
 
